@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 
-DB_FILE = "/home/perseus/twitter_bots/stream_bot/stream_bot.db"
-
 import re, sys
-import sqlite3 as lite
 
 import tweepy
 
@@ -11,20 +8,12 @@ from listeners import StreamListener
 from responders import ReplyResponse
 
 class StreamBot(object):
-    def __init__(
-            self, botname,
-            consumer_key, consumer_secret,
-            access_token, access_token_secret
-            ):
+    def __init__(self, botname, creds, responders):
         self.botname = botname
-        self.api = self.get_api(
-                consumer_key, consumer_secret,
-                access_token, access_token_secret
-                )
-        self.responders = [ReplyResponse(self)]
-
-    def add_responder(self, responder):
-        self.responders.append(responder)
+        self.api = self.get_api(*creds)
+        self.responders = responders
+        for responder in self.responders:
+            responder.set_twitter_bot(self)
 
     def get_api(
             self,
@@ -53,15 +42,3 @@ class StreamBot(object):
                         )
                 for match in matches:
                     responder.respond(tweet, match)
-
-
-def main():
-    try:
-        streambot = StreamBot(sys.argv[1])
-        streambot.listen()
-    except KeyboardInterrupt:
-        print "Quitting..."
-        sys.exit(0)
-
-if __name__ == "__main__":
-    main()

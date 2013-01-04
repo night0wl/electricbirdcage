@@ -6,6 +6,7 @@ import sys
 import sqlite3 as lite
 
 from bots import StreamBot
+from responders import ReplyResponse
 
 def sql_get_one(db, sql, args):
     return sql_exec(db, sql, args, num=1)
@@ -35,11 +36,18 @@ def get_creds(db, botname):
     return sql_get_one(db, string, [botname])
 
 def main():
+    replies = {
+        "^.*achoo.*$": "Bless You"
+        }
+    responders = [
+        ReplyResponse(replies)
+        ]
+
     try:
         botname = sys.argv[1]
         db = lite.connect(DB_FILE)
         creds = get_creds(db, botname)
-        bot = StreamBot(botname, *creds)
+        bot = StreamBot(botname, creds, responders)
         bot.listen(None, ['@' + botname])
     except KeyboardInterrupt:
         print

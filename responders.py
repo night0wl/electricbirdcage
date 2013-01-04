@@ -10,18 +10,23 @@ class ResponseHandler(object):
         matches =  [p[0] for p in self.match_terms if p[1].match(tweet.text)]
         return matches
 
+    def set_twitter_bot(self, bot):
+        self.twitter_bot = bot
+        return True
+
 
 class ReplyResponse(ResponseHandler):
-    def __init__(self, stream_bot):
-        self.stream_bot = stream_bot
-        self.replies = {
-                "^.*achoo.*$":
-                "Bless You"
-                }
+    def __init__(self, replies):
+        self.twitter_bot = None
+        self.replies = replies
         ResponseHandler.__init__(self, self.replies.keys())
 
     def respond(self, tweet, match_str):
-        self. stream_bot.api.update_status(
+        if not self.twitter_bot:
+            print "ERROR: Twitter bot not set"
+            return False
+
+        self. twitter_bot.api.update_status(
                     "@%s %s" % (
                         tweet.author.screen_name,
                         self.replies[match_str]
@@ -32,3 +37,4 @@ class ReplyResponse(ResponseHandler):
                 tweet.author.screen_name,
                 self.replies[match_str]
                 )
+        return True
