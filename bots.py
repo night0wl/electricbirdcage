@@ -11,55 +11,36 @@ from listeners import StreamListener
 from responders import ReplyResponse
 
 class StreamBot(object):
-    def __init__(self, botname):
+    def __init__(
+            self, botname,
+            consumer_key, consumer_secret,
+            access_token, access_token_secret
+            ):
         self.botname = botname
-        self.db = lite.connect(DB_FILE)
-        self.api = self.get_api()
+        self.api = self.get_api(
+                consumer_key, consumer_secret,
+                access_token, access_token_secret
+                )
         self.responders = [ReplyResponse(self)]
 
     def add_responder(self, responder):
         self.responders.append(responder)
 
-    def sql_get_one(self, sql, args):
-        return self.sql_exec(sql, args, num=1)
-
-
-    def sql_exec(self, sql, args, num=0, commit=False, first_column_only=True):
-        cur = self.db.cursor()
-        cur.execute(sql, args)
-
-        if commit:
-            self.db.commit()
-            return True
-        elif num == 1:
-            return cur.fetchone()
-        else:
-            result = cur.fetchall()
-            if first_column_only:
-                return [x[0] for x in result]
-            else:
-                return [x for x in result]
-
-    def get_api(self):
-        string = ''.join([
-            "SELECT consumer_key, consumer_secret, access_token,",
-            "access_token_secret FROM accounts WHERE account = ?"
-            ])
-
-        (
-        consumer_key, consumer_secret,
-        access_token, access_token_secret
-        ) = self.sql_get_one(string, [self.botname])
+    def get_api(
+            self,
+            consumer_key, consumer_secret,
+            access_token, access_token_secret
+            ):
 
         auth0 = tweepy.auth.OAuthHandler(consumer_key, consumer_secret)
         auth0.set_access_token(access_token, access_token_secret)
         return tweepy.API(auth0)
 
-    def listen(self):
+    def listen(self, to_follow, to_track):
         streamer = tweepy.Stream(
                 self.api.auth, StreamListener(self), timeout=300
                 )
-        streamer.filter(None,['@' + self.botname])
+        streamer.filter(to_follow, to_track)
 
     def process(self, tweet):
         for responder in self.responders:
