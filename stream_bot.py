@@ -2,7 +2,7 @@
 
 DB_FILE = "/home/perseus/twitter_bots/stream_bot/stream_bot.db"
 
-import sys
+import re, sys
 import sqlite3 as lite
 
 import tweepy
@@ -13,13 +13,43 @@ class StreamListener(tweepy.StreamListener):
         tweepy.StreamListener.__init__(self)
 
     def on_status(self, status):
-        self.stream_bot.respond(status)
-        print "%s\t%s\t%s" % (
-                status.created_at,
-                status.author.screen_name,
-                status.text.encode("ascii", "replace")
-                )
+        print "Found a mention"
+        self.stream_bot.process(status)
 
+
+class ResponseHandler(object):
+    def __init__(self, match_terms=[]):
+        self.match_terms = [(x, re.compile(x, re.IGNORECASE)) for x in match_terms]
+
+    def matches(self, tweet):
+        """ Called to determine if a tweet matches """
+        print tweet.text
+        matches =  [p[0] for p in self.match_terms if p[1].match(tweet.text)]
+        print matches
+        return matches
+
+
+class MI1ResponseHandler(ResponseHandler):
+    def __init__(self, stream_bot):
+        self.stream_bot = stream_bot
+        self.replies = {
+                "^.*you fight like a dairy([ -])?farmer.*$":
+                "How appropriate. You fight like a cow."
+                }
+        ResponseHandler.__init__(self, self.replies.keys())
+
+    def respond(self, tweet, match_str):
+        self. stream_bot.api.update_status(
+                    "@%s %s" % (
+                        tweet.author.screen_name,
+                        self.replies[match_str]
+                        ),
+                    tweet.id
+                    )
+        print "Replied to: %s\t\t%s" % (
+                tweet.author.screen_name,
+                self.replies[match_str]
+                )
 
 
 class StreamBot(object):
@@ -27,7 +57,10 @@ class StreamBot(object):
         self.botname = botname
         self.db = lite.connect(DB_FILE)
         self.api = self.get_api()
+        self.responders = [MI1ResponseHandler(self)]
 
+    def add_responder(self, responder):
+        self.responders.append(responder)
 
     def sql_get_one(self, sql, args):
         return self.sql_exec(sql, args, num=1)
@@ -70,17 +103,31 @@ class StreamBot(object):
                 )
         streamer.filter(None,['@' + self.botname])
 
-    def respond(self, tweet):
-        if "achoo" in tweet.text.lower():
-            self.api.update_status(
-                        "@%s Bless You!" % tweet.author.screen_name
+    def process(self, tweet):
+        for responder in self.responders:
+            matches = responder.matches(tweet)
+            if len(matches):
+                print "%s\t%s\t%s" % (
+                        tweet.created_at,
+                        tweet.author.screen_name,
+                        tweet.text.encode("ascii", "replace")
                         )
+                for match in matches:
+                    responder.respond(tweet, match)
+
+
+    #    if "achoo" in tweet.text.lower():
+    #        self.api.update_status(
+    #                    "@%s Bless You!" % tweet.author.screen_name,
+    #                    tweet.id
+    #                    )
 
 
 
 
 def main():
     streambot = StreamBot(sys.argv[1])
+#    streambot.add_responder(MI1ResponseHandler(streambot))
     streambot.listen()
 
 if __name__ == "__main__":
