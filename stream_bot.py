@@ -7,57 +7,15 @@ import sqlite3 as lite
 
 import tweepy
 
-class StreamListener(tweepy.StreamListener):
-    def __init__(self, stream_bot):
-        self.stream_bot = stream_bot
-        tweepy.StreamListener.__init__(self)
-
-    def on_status(self, status):
-        print "Found a mention"
-        self.stream_bot.process(status)
-
-
-class ResponseHandler(object):
-    def __init__(self, match_terms=[]):
-        self.match_terms = [(x, re.compile(x, re.IGNORECASE)) for x in match_terms]
-
-    def matches(self, tweet):
-        """ Called to determine if a tweet matches """
-        print tweet.text
-        matches =  [p[0] for p in self.match_terms if p[1].match(tweet.text)]
-        print matches
-        return matches
-
-
-class MI1ResponseHandler(ResponseHandler):
-    def __init__(self, stream_bot):
-        self.stream_bot = stream_bot
-        self.replies = {
-                "^.*you fight like a dairy([ -])?farmer.*$":
-                "How appropriate. You fight like a cow."
-                }
-        ResponseHandler.__init__(self, self.replies.keys())
-
-    def respond(self, tweet, match_str):
-        self. stream_bot.api.update_status(
-                    "@%s %s" % (
-                        tweet.author.screen_name,
-                        self.replies[match_str]
-                        ),
-                    tweet.id
-                    )
-        print "Replied to: %s\t\t%s" % (
-                tweet.author.screen_name,
-                self.replies[match_str]
-                )
-
+from listeners import StreamListener
+from responders import ReplyResponse
 
 class StreamBot(object):
     def __init__(self, botname):
         self.botname = botname
         self.db = lite.connect(DB_FILE)
         self.api = self.get_api()
-        self.responders = [MI1ResponseHandler(self)]
+        self.responders = [ReplyResponse(self)]
 
     def add_responder(self, responder):
         self.responders.append(responder)
@@ -126,9 +84,12 @@ class StreamBot(object):
 
 
 def main():
-    streambot = StreamBot(sys.argv[1])
-#    streambot.add_responder(MI1ResponseHandler(streambot))
-    streambot.listen()
+    try:
+        streambot = StreamBot(sys.argv[1])
+        streambot.listen()
+    except KeyboardInterrupt:
+        print "Quitting..."
+        sys.exit(0)
 
 if __name__ == "__main__":
     main()
