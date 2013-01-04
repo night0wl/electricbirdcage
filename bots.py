@@ -74,15 +74,6 @@ class StreamBot(object):
                     responder.respond(tweet, match)
 
 
-    #    if "achoo" in tweet.text.lower():
-    #        self.api.update_status(
-    #                    "@%s Bless You!" % tweet.author.screen_name,
-    #                    tweet.id
-    #                    )
-
-
-
-
 def main():
     try:
         streambot = StreamBot(sys.argv[1])
