@@ -24,10 +24,13 @@ class BaseResponse(object):
         self.twitter_bot = bot
         return True
 
-    def respond(self, tweet, reply):
+    def respond(self, reply, reply_to_id=None):
         if not self.twitter_bot:
             print "ERROR: Twitter bot not set"
             return False
-        self.twitter_bot.api.update_status(reply)
+        self.twitter_bot.api.update_status(
+                                reply,
+                                reply_to_id
+                                )
         print "Reply: %s" % reply
         return True

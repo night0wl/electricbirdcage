@@ -2,4 +2,11 @@ from BaseResponse import BaseResponse
 
 class SimpleResponse(BaseResponse):
     def react(self, *args):
-        self.respond(*args)
+        tweet, match = args
+        self.respond(
+                "@%s %s" % (
+                        tweet.author.screen_name,
+                        self.replies[match]
+                        ),
+                tweet.id
+                )

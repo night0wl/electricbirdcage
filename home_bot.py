@@ -2,55 +2,35 @@
 
 DB_FILE = "/home/perseus/twitter_bots/stream_bot/stream_bot.db"
 
+import redis
 import sys
 import sqlite3 as lite
 
 from bots import StreamBot
-from responders import PrivateResponse
-
-def sql_get_one(db, sql, args):
-    return sql_exec(db, sql, args, num=1)
-
-def sql_exec(db, sql, args, num=0, commit=False, first_column_only=True):
-    cur = db.cursor()
-    cur.execute(sql, args)
-
-    if commit:
-        self.db.commit()
-        return True
-    elif num == 1:
-        return cur.fetchone()
-    else:
-        result = cur.fetchall()
-        if first_column_only:
-            return [x[0] for x in result]
-        else:
-            return [x for x in result]
+from responders import ServerResponse
 
 def get_creds(db, botname):
-    string = ''.join([
-        "SELECT consumer_key, consumer_secret, access_token,",
-        "access_token_secret FROM accounts WHERE account = ?"
-        ])
-
-    return sql_get_one(db, string, [botname])
+    #string = ''.join([
+    #    "SELECT consumer_key, consumer_secret, access_token,",
+    #    "access_token_secret FROM accounts WHERE account = ?"
+    #    ])
+    #
+    #return sql_get_one(db, string, [botname])
+    base_key = "%s:" % botname.lower()
+    red = redis.StrictRedis()
+    return (
+        red.get(base_key + "consumer_key"),
+        red.get(base_key + "consumer_secret"),
+        red.get(base_key + "access_token"),
+        red.get(base_key + "access_token_secret")
+        )
 
 def main():
-    replies = {
-        "^.*achoo.*$": "Bless You"
-        }
-
-    server_status_replies = {
-        "status_down": "Server \"%s\" is down",
-        "status_up": "Server \"%s\" is up"
-        }
-    responders = [
-        PrivateResponse(replies)
-
-        ]
-
     try:
         botname = sys.argv[1]
+        responders = [
+            ServerResponse(botname)
+            ]
         db = lite.connect(DB_FILE)
         creds = get_creds(db, botname)
         bot = StreamBot(botname, creds, responders)
