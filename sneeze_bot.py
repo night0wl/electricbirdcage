@@ -6,7 +6,7 @@ import sys
 import sqlite3 as lite
 
 from bots import StreamBot
-from responders import PrivateResponse
+from responders import SimpleResponse
 
 def sql_get_one(db, sql, args):
     return sql_exec(db, sql, args, num=1)
@@ -40,7 +40,7 @@ def main():
         "^.*achoo.*$": "Bless You"
         }
     responders = [
-        PrivateResponse(replies)
+        SimpleResponse(replies)
         ]
 
     try:
