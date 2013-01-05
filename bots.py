@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
-import re, sys
-
+import re
 import tweepy
 
 from listeners import StreamListener
-from responders import ReplyResponse
+from responders import SimpleResponse
 
 class StreamBot(object):
     def __init__(self, botname, creds, responders):
@@ -41,4 +40,4 @@ class StreamBot(object):
                         tweet.text.encode("ascii", "replace")
                         )
                 for match in matches:
-                    responder.respond(tweet, match)
+                    responder.react(tweet, match)

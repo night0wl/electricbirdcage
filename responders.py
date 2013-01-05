@@ -1,9 +1,22 @@
 import re
 
+from tweepy.error import TweepError
 
-class ResponseHandler(object):
-    def __init__(self, match_terms=[]):
-        self.match_terms = [(x, re.compile(x, re.IGNORECASE)) for x in match_terms]
+
+class BaseResponse(object):
+    def __init__(self, replies):
+        self.replies = replies
+        self.twitter_bot = None
+        self.match_terms = [
+            (x, re.compile(x, re.IGNORECASE)) for x in replies.keys()
+            ]
+
+    def react(self, *args):
+        """
+        This is the method called by the bot to
+        process, respond to or otherwise act upon
+        the tweet it receives
+        """
 
     def matches(self, tweet):
         """ Called to determine if a tweet matches """
@@ -14,27 +27,55 @@ class ResponseHandler(object):
         self.twitter_bot = bot
         return True
 
-
-class ReplyResponse(ResponseHandler):
-    def __init__(self, replies):
-        self.twitter_bot = None
-        self.replies = replies
-        ResponseHandler.__init__(self, self.replies.keys())
-
-    def respond(self, tweet, match_str):
+    def respond(self, tweet, reply):
         if not self.twitter_bot:
             print "ERROR: Twitter bot not set"
             return False
-
-        self. twitter_bot.api.update_status(
-                    "@%s %s" % (
-                        tweet.author.screen_name,
-                        self.replies[match_str]
-                        ),
-                    tweet.id
-                    )
-        print "Replied to: %s\t\t%s" % (
-                tweet.author.screen_name,
-                self.replies[match_str]
-                )
+        #  Thou shall not spam!
+        #self.twitter_bot.api.update_status(reply)
+        #            "@%s %s" % (
+        #                tweet.author.screen_name,
+        #                self.replies[match_str]
+        #                ),
+        #            tweet.id
+        #            )
+        print "Reply: %s" % reply
         return True
+
+
+class PrivateResponse(BaseResponse):
+    def react(self, *args):
+        tweet, match = args
+        reply = "DM @%s %s" % (
+                tweet.author.screen_name,
+                self.replies[match]
+                )
+        self.respond_private(tweet, reply)
+
+    def respond_private(self, tweet, reply):
+        if reply[:2].lower() != "dm":
+            print "That reply isn't a direct message"
+            print reply
+            return False
+
+        try:
+            self.twitter_bot.api.update_status(reply)
+            print "Reply: %s" % reply
+            return True
+        except TweepError:
+            print "Cannot send DM to %s" % tweet.author.screen_name
+            return False
+
+
+
+class SimpleResponse(BaseResponse):
+    def react(self, *args):
+        self.respond(*args)
+
+
+class AbuseCounterResponse(PrivateResponse):
+    pass
+
+
+class ABReplyResponse(BaseResponse):
+    pass

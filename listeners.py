@@ -6,4 +6,5 @@ class StreamListener(tweepy.StreamListener):
         tweepy.StreamListener.__init__(self)
 
     def on_status(self, status):
+        print "A status"
         self.stream_bot.process(status)
