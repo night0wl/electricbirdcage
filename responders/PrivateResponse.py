@@ -17,7 +17,7 @@ class PrivateResponse(BaseResponse):
             return False
 
         try:
-            self.twitter_bot.api.update_status(reply)
+            self.respond(reply)
             print "Reply: %s" % reply
             return True
         except TweepError:
