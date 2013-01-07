@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-DB_FILE = "/home/perseus/twitter_bots/stream_bot/stream_bot.db"
-
 import redis
 import sys
 import sqlite3 as lite
@@ -10,12 +8,6 @@ from bots import StreamBot
 from responders import ServerResponse
 
 def get_creds(db, botname):
-    #string = ''.join([
-    #    "SELECT consumer_key, consumer_secret, access_token,",
-    #    "access_token_secret FROM accounts WHERE account = ?"
-    #    ])
-    #
-    #return sql_get_one(db, string, [botname])
     base_key = "%s:" % botname.lower()
     red = redis.StrictRedis()
     return (
