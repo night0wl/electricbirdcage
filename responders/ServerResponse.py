@@ -1,5 +1,4 @@
 import paramiko
-import redis
 import socket
 from subprocess import Popen, PIPE
 from time import sleep
@@ -13,17 +12,18 @@ class ServerResponse(PrivateResponse):
             "@%s SERVER WAKEUP.*$" % botname: self.server_wake
             }
 
-        PrivateResponse.__init__(self, replies)
+        PrivateResponse.__init__(self, botname, replies)
 
         self.server_replies = {
-            "status_down": "@%s %s is down",
-            "status_up": "@%s %s is up",
+            "server_down": "@%s %s is down",
+            "server_up": "@%s %s is up",
             "server_down_now": "@%s %s has shut down",
             "server_up_now":  "@%s %s is now up",
+            "server_uptime": "@%s %s has been up for %s",
             "wakeup_sent": "@%s Acknowledged. Wakeup packet sent to %s",
+            "no_auth": "@%s Sorry, but I'm not supposed to talk to strangers",
             "fail": "DM @%s Oh Noes! That failed"
             }
-        self.redis = redis.StrictRedis()
 
     def get_ip_from_mac(self, mac):
         subp = Popen(
@@ -36,6 +36,9 @@ class ServerResponse(PrivateResponse):
 
     def check_ssh(self, base_key, initial_wait=0, interval=0, retries=1):
         ip = self.get_ip_from_mac(self.redis.get(base_key + 'mac'))
+        if ip == '':
+            return False
+
         user = self.redis.get(base_key + 'user')
         key_file = self.redis.get(base_key + 'key_file')
         ssh = paramiko.SSHClient()
@@ -53,9 +56,28 @@ class ServerResponse(PrivateResponse):
                 sleep(interval)
         return False
 
-
     def server_check(self, tweet):
         """ Hello """
+        server_name = tweet.text.lower().split()[3]
+        base_key = "%s:server:%s:" % (
+                        self.twitter_bot.botname.lower(),
+                        server_name
+                        )
+        if self.check_ssh(base_key):
+            self.respond(
+                    self.server_replies["server_up"] % (
+                                tweet.author.screen_name,
+                                server_name
+                                )
+                    )
+        else:
+            self.respond(
+                    self.server_replies["server_down"] % (
+                                tweet.author.screen_name,
+                                server_name
+                                )
+                    )
+
 
     def server_wake(self, tweet):
         server_name = tweet.text.lower().split()[3]
@@ -97,4 +119,5 @@ class ServerResponse(PrivateResponse):
 
     def react(self, *args):
         tweet, match = args
-        self.replies[match](tweet)
+        if self.is_allowed(tweet.author.screen_name):
+            self.replies[match](tweet)

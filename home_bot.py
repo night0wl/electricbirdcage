@@ -2,12 +2,11 @@
 
 import redis
 import sys
-import sqlite3 as lite
 
 from bots import StreamBot
-from responders import ServerResponse
+from responders import SimpleResponse, ServerResponse
 
-def get_creds(db, botname):
+def get_creds(botname):
     base_key = "%s:" % botname.lower()
     red = redis.StrictRedis()
     return (
@@ -18,13 +17,17 @@ def get_creds(db, botname):
         )
 
 def main():
+    simple_replies = {
+            "^.*achoo.*$": "Bless You"
+            }
+
     try:
         botname = sys.argv[1]
         responders = [
+            SimpleResponse(botname, simple_replies),
             ServerResponse(botname)
             ]
-        db = lite.connect(DB_FILE)
-        creds = get_creds(db, botname)
+        creds = get_creds(botname)
         bot = StreamBot(botname, creds, responders)
         bot.listen(None, ['@' + botname])
     except KeyboardInterrupt:
