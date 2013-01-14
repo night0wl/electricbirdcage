@@ -36,6 +36,9 @@ class BaseResponse(object):
                                     )
                     ]:
             return True
+        # This is here for testing!
+        elif self.botname.lower() == user.lower():
+            return True
         else:
             return False
 

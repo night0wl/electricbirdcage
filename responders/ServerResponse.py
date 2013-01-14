@@ -9,7 +9,8 @@ class ServerResponse(PrivateResponse):
     def __init__(self, botname):
         replies = {
             "@%s SERVER STATUS.*$" % botname: self.server_check,
-            "@%s SERVER WAKEUP.*$" % botname: self.server_wake
+            "@%s SERVER WAKEUP.*$" % botname: self.server_wake,
+            "@%s SERVER SHUTDOWN.*$" % botname: self.server_shutdown
             }
 
         PrivateResponse.__init__(self, botname, replies)
@@ -20,8 +21,8 @@ class ServerResponse(PrivateResponse):
             "server_down_now": "@%s %s has shut down",
             "server_up_now":  "@%s %s is now up",
             "server_uptime": "@%s %s has been up for %s",
+            "server_shutdown": "@%s Acknowledged. %s is shutting down",
             "wakeup_sent": "@%s Acknowledged. Wakeup packet sent to %s",
-            "no_auth": "@%s Sorry, but I'm not supposed to talk to strangers",
             "fail": "DM @%s Oh Noes! That failed"
             }
 
@@ -34,30 +35,44 @@ class ServerResponse(PrivateResponse):
             )
         return subp.stdout.readline().strip()
 
-    def check_ssh(self, base_key, initial_wait=0, interval=0, retries=1):
+    def get_ssh_conn(self):
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        return ssh
+
+    def get_ssh_creds(self, base_key):
         ip = self.get_ip_from_mac(self.redis.get(base_key + 'mac'))
         if ip == '':
-            return False
+            return (None, None, None)
 
         user = self.redis.get(base_key + 'user')
         key_file = self.redis.get(base_key + 'key_file')
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        return (ip, user, key_file)
 
+
+    def check_ssh(self, base_key, initial_wait=0, interval=0, retries=1):
         sleep(initial_wait)
+        ssh = self.get_ssh_conn()
+        ip, user, key_file = self.get_ssh_creds(base_key)
+        if not ip:
+            return False
 
         for x in range(retries):
             print "Attempt %s" % x
             try:
                 ssh.connect(ip, username=user, key_filename=key_file)
                 return True
-            except Exception, e:
-                print e
+            except (paramiko.SSHException, socket.error):
                 sleep(interval)
+            except (
+                    paramiko.AuthenticationException,
+                    paramiko.BadHostKeyException,
+                    ), e:
+                print e
+                return False
         return False
 
     def server_check(self, tweet):
-        """ Hello """
         server_name = tweet.text.lower().split()[3]
         base_key = "%s:server:%s:" % (
                         self.twitter_bot.botname.lower(),
@@ -116,6 +131,40 @@ class ServerResponse(PrivateResponse):
                                 tweet.author.screen_name,
                                 )
                     )
+
+    def server_shutdown(self, tweet):
+        server_name = tweet.text.lower().split()[3]
+        base_key = "%s:server:%s:" % (
+                        self.twitter_bot.botname.lower(),
+                        server_name
+                        )
+
+        ssh = self.get_ssh_conn()
+        ip, user, key_file = self.get_ssh_creds(base_key)
+        try:
+            print "trying"
+            ssh.connect(ip, username=user, key_filename=key_file)
+        except (
+                paramiko.AuthenticationException,
+                paramiko.BadHostKeyException,
+                paramiko.SSHException,
+                socket.error
+                ), e:
+            self.respond_private(
+                    tweet,
+                    self.server_replies["fail"] % (
+                                tweet.author.screen_name,
+                                )
+                    )
+        print "executing"
+        stdin, stdout, sterr = ssh.exec_command("sudo halt")
+        self.respond(
+                self.server_replies["server_shutdown"] % (
+                                tweet.author.screen_name,
+                                server_name
+                                )
+                )
+
 
     def react(self, *args):
         tweet, match = args
