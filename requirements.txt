@@ -1,0 +1,4 @@
+distribute==0.6.14
+gunicorn==0.10.0
+virtualenv==1.4.9
+wsgiref==0.1.2

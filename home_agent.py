@@ -3,8 +3,8 @@
 import redis
 import sys
 
-from bots import StreamBot
-from responders import SimpleResponse, ServerResponse
+from botwit.bots import StreamBot
+from botwit.responders import SimpleResponse, ServerResponse, HeatingResponse
 
 def get_creds(botname):
     base_key = "%s:" % botname.lower()
@@ -25,7 +25,8 @@ def main():
         botname = sys.argv[1]
         responders = [
             SimpleResponse(botname, simple_replies),
-            ServerResponse(botname)
+            ServerResponse(botname),
+            HeatingResponse(botname)
             ]
         creds = get_creds(botname)
         bot = StreamBot(botname, creds, responders)

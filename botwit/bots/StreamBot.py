@@ -3,8 +3,8 @@
 import re
 import tweepy
 
-from listeners import StreamListener
-from responders import SimpleResponse
+from botwit.listeners import StreamListener
+from botwit.responders import SimpleResponse
 
 class StreamBot(object):
     def __init__(self, botname, creds, responders):
