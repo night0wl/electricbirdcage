@@ -162,7 +162,8 @@ class ServerResponse(PrivateResponse):
                 self.server_replies["server_shutdown"] % (
                                 tweet.author.screen_name,
                                 server_name
-                                )
+                                ),
+                tweet.id
                 )
 
 

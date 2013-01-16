@@ -26,7 +26,8 @@ class HeatingResponse(PrivateResponse):
                 self.heating_replies["heating_status"] % (
                                         tweet.author.screen_name,
                                         self.temper_dev.get_temperature()
-                                        )
+                                        ),
+                tweet.id
                 )
 
     def heating_on(self, tweet):
