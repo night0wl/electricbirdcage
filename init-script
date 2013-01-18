@@ -1,0 +1,37 @@
+#!/bin/sh
+
+set -e
+
+NAME=botwit
+PIDFILE=/var/run/$NAME.pid
+USER=perseus
+ENV_PATH=/home/$USER/twitter_bots/stream_bot
+AGENT=$ENV_PATH/botwit/home_agent.py
+BOT=NightOwlBot
+DAEMON=$ENV_PATH/bin/python
+DAEMON_OPTS="$AGENT $BOT"
+
+case "$1" in
+  start)
+        echo -n "Starting "$NAME
+        start-stop-daemon --start --quiet --pidfile $PIDFILE -b -m -u $USER -g $USER --exec $DAEMON -- $DAEMON_OPTS
+        echo "."
+    ;;
+  stop)
+        echo -n "Stopping "$NAME
+        start-stop-daemon --stop --quiet --oknodo --pidfile $PIDFILE
+        echo "."
+    ;;
+  restart)
+        echo -n "Restarting "$NAME
+        start-stop-daemon --stop --quiet --oknodo --retry 30 --pidfile $PIDFILE
+        start-stop-daemon --start --quiet --pidfile $PIDFILE -b -m -u $USER -g $USER --exec $DAEMON -- $DAEMON_OPTS
+        echo "."
+    ;;
+
+  *)
+    echo "Usage: "$1" {start|stop|restart}"
+    exit 1
+esac
+
+exit 0

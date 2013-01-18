@@ -8,16 +8,16 @@ class PrivateResponse(BaseResponse):
                 tweet.author.screen_name,
                 self.replies[match]
                 )
-        self.respond_private(tweet, reply)
+        self.respond_private(reply, tweet.id)
 
-    def respond_private(self, tweet, reply):
+    def respond_private(self, reply, reply_to_id=None):
         if reply[:2].lower() != "dm":
             print "That reply isn't a direct message"
             print reply
             return False
 
         try:
-            self.respond(reply)
+            self.respond(reply, reply_to_id)
             print "Reply: %s" % reply
             return True
         except TweepError:
