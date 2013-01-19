@@ -7,9 +7,14 @@ from PrivateResponse import PrivateResponse
 class HeatingResponse(PrivateResponse):
     def __init__(self, botname):
         temper_devs = temper.TemperHandler().get_devices()
-        heater_devs = list(USBScanner().findDevices())
         self.temper_dev = (len(temper_devs) > 0 and temper_devs[0]) or None
-        self.heater_dev = (len(heater_devs) > 0 and heater_devs[0]) or None
+
+        heater_devs = list(USBScanner().findDevices())
+        if len(heater_devs) > 0:
+            heater_devs[0].open()
+            self.heater_dev = heater_devs[0].actuator("A1")
+        else:
+            self.heater_dev = None
 
         replies = {
             "@%s HEATING STATUS.*$" % botname: self.heating_status,
@@ -21,6 +26,8 @@ class HeatingResponse(PrivateResponse):
 
         self.heating_replies = {
             "heating_status": "@%s Current temperature is %0.2fC",
+            "heating_on": "@%s The heating is now on",
+            "heating_off": "@%s The heating is now off",
             "no_temper_dev": "DM @%s Did not detect a TEMPer device",
             "no_x10_dev": "DM @%s Did not detect an x10 controller device",
             "fail": "DM @%s Oh Noes! That failed"
@@ -44,13 +51,11 @@ class HeatingResponse(PrivateResponse):
                     )
 
     def heating_on(self, tweet):
-        pass
         if self.heater_dev:
             self.heater_dev.on()
             self.respond(
                     self.heating_replies["heating_on"] % (
-                                            tweet.author.screen_name,
-                                            self.temper_dev.get_temperature()
+                                            tweet.author.screen_name
                                             ),
                     tweet.id
                     )
@@ -64,6 +69,21 @@ class HeatingResponse(PrivateResponse):
 
     def heating_off(self, tweet):
         pass
+        if self.heater_dev:
+            self.heater_dev.off()
+            self.respond(
+                    self.heating_replies["heating_off"] % (
+                                            tweet.author.screen_name
+                                            ),
+                    tweet.id
+                    )
+        else:
+            self.respond_private(
+                    self.heating_replies["no_x10_dev"]  % (
+                                            tweet.author.screen_name
+                                            ),
+                    tweet.id
+                    )
 
     def react(self, *args):
         tweet, match = args
