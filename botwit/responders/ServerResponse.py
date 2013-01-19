@@ -83,14 +83,16 @@ class ServerResponse(PrivateResponse):
                     self.server_replies["server_up"] % (
                                 tweet.author.screen_name,
                                 server_name
-                                )
+                                ),
+                    tweet.id
                     )
         else:
             self.respond(
                     self.server_replies["server_down"] % (
                                 tweet.author.screen_name,
                                 server_name
-                                )
+                                ),
+                    tweet.id
                     )
 
 
@@ -129,7 +131,8 @@ class ServerResponse(PrivateResponse):
                     tweet,
                     self.server_replies["fail"] % (
                                 tweet.author.screen_name,
-                                )
+                                ),
+                    tweet.id
                     )
 
     def server_shutdown(self, tweet):
@@ -154,7 +157,8 @@ class ServerResponse(PrivateResponse):
                     tweet,
                     self.server_replies["fail"] % (
                                 tweet.author.screen_name,
-                                )
+                                ),
+                    tweet.id
                     )
         print "executing"
         stdin, stdout, sterr = ssh.exec_command("sudo halt")
