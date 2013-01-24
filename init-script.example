@@ -2,14 +2,20 @@
 
 set -e
 
+# Set these with your account name
+USER=<user to run as>
+BOT=<twitter account used for the bot>
+
+# Set this to the path for virtual environment.
+ENV_PATH=</path/to/virtual/env>
+
+# Set these if different (if ENV_PATH is not set, these must be hard coded)
+AGENT=$ENV_PATH/botwit/home_agent.py
+DAEMON=$ENV_PATH/bin/python
+
+DAEMON_OPTS="$AGENT $BOT"
 NAME=botwit
 PIDFILE=/var/run/$NAME.pid
-USER=perseus
-ENV_PATH=/home/$USER/twitter_bots/stream_bot
-AGENT=$ENV_PATH/botwit/home_agent.py
-BOT=NightOwlBot
-DAEMON=$ENV_PATH/bin/python
-DAEMON_OPTS="$AGENT $BOT"
 
 case "$1" in
   start)
