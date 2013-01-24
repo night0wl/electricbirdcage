@@ -5,7 +5,8 @@ from time import sleep
 from PrivateResponse import PrivateResponse
 
 class HeatingResponse(PrivateResponse):
-    def __init__(self, botname):
+    def __init__(self, botname, pipe):
+        self.pipe = pipe
         temper_devs = temper.TemperHandler().get_devices()
         self.temper_dev = (len(temper_devs) > 0 and temper_devs[0]) or None
 
@@ -25,7 +26,10 @@ class HeatingResponse(PrivateResponse):
         PrivateResponse.__init__(self, botname, replies)
 
         self.heating_replies = {
-            "heating_status": "@%s Current temperature is %0.2fC",
+            "heating_status": ''.join([
+                            "@%s Current temperature is %0.2fC. ",
+                            "Change (min/hour) %0.2f / %0.2f"
+                            ]),
             "heating_on": "@%s The heating is now on",
             "heating_off": "@%s The heating is now off",
             "no_temper_dev": "DM @%s Did not detect a TEMPer device",
@@ -35,10 +39,13 @@ class HeatingResponse(PrivateResponse):
 
     def heating_status(self, tweet):
         if self.temper_dev:
+            self.pipe.send("get_diffs")
+            #out_args = (tweet.author.screen_name,) + self.pipe.recv()
+            #print out_args
             self.respond(
                     self.heating_replies["heating_status"] % (
-                                            tweet.author.screen_name,
-                                            self.temper_dev.get_temperature()
+                                            (tweet.author.screen_name,) +
+                                            self.pipe.recv()
                                             ),
                     tweet.id
                     )

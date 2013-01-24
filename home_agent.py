@@ -3,7 +3,10 @@
 import redis
 import sys
 
+from multiprocessing import Process, Pipe
+
 from botwit.bots import StreamBot
+from botwit.monitors import TemperatureMonitor
 from botwit.responders import SimpleResponse, ServerResponse, HeatingResponse
 
 def get_creds(botname):
@@ -23,15 +26,21 @@ def main():
 
     try:
         botname = sys.argv[1]
+        mon = TemperatureMonitor()
+        parent, child = Pipe()
+        p = Process(target=mon.run, args=(child,))
+        p.start()
         responders = [
             SimpleResponse(botname, simple_replies),
             ServerResponse(botname),
-            HeatingResponse(botname)
+            HeatingResponse(botname, parent)
             ]
         creds = get_creds(botname)
         bot = StreamBot(botname, creds, responders)
         bot.listen(None, ['@' + botname])
     except KeyboardInterrupt:
+        parent.send("halt")
+        p.join()
         print
         print "Quitting..."
         sys.exit(0)

@@ -28,29 +28,31 @@ class TemperatureMonitor(object):
         min_diff = min_events and get_diff(min_events) or 0.0
         hour_diff = hour_events and get_diff(hour_events) or 0.0
 
-        return min_diff, hour_diff
+        return current_temperature, min_diff, hour_diff
 
 
     def run(self, pipe):
-        while True:
-            current_temperature = self.dev.get_temperature()
-            if pipe.poll():
-                msg = pipe.recv()
-                if msg == "get_diffs":
-                    pipe.send(self.get_diffs(current_temperature))
-                elif msg == "halt":
-                    break
+        try:
+            while True:
+                current_temperature = self.dev.get_temperature()
+                if pipe.poll():
+                    msg = pipe.recv()
+                    if msg == "get_diffs":
+                        pipe.send(self.get_diffs(current_temperature))
+                    elif msg == "halt":
+                        break
 
-            if self.events[0][1] != current_temperature:
-                try:
-                    self.events.insert(0, (time(), current_temperature))
-                except usb.USBError:
-                    print "USB Error"
-                    continue
-            #print self.get_diffs(current_temperature)
-            sleep(1)
+                if self.events[0][1] != current_temperature:
+                    try:
+                        self.events.insert(0, (time(), current_temperature))
+                    except usb.USBError:
+                        print "USB Error"
+                        continue
+                sleep(1)
 
-        pipe.send("quitting")
+            pipe.send("quitting")
+        except KeyboardInterrupt:
+            pass
 
 if __name__ == "__main__":
     mon = TemperatureMonitor()
