@@ -32,7 +32,7 @@ def get_creds(botname):
 
 def main():
     """
-    Run the agent
+    Run the botwit agent
     """
     simple_replies = {
             "^.*achoo.*$": "Bless You"

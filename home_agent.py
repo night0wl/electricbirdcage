@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+# A botwit agent for home automation.
+# Currently supports monitoring temperature and controlling heating and servers
+#
+# Author: Matt Revell
+
 import redis
 import sys
 
@@ -10,6 +15,16 @@ from botwit.monitors import TemperatureMonitor
 from botwit.responders import SimpleResponse, ServerResponse, HeatingResponse
 
 def get_creds(botname):
+    """
+    Get Twitter API credetials from redis
+
+    Returns (
+        consumer_key,
+        consumer_secret,
+        access_token,
+        access_token_secret
+        )
+    """
     base_key = "%s:" % botname.lower()
     red = redis.StrictRedis()
     return (
@@ -20,6 +35,9 @@ def get_creds(botname):
         )
 
 def main():
+    """
+    Run the botwit agent
+    """
     simple_replies = {
             "^.*achoo.*$": "Bless You"
             }
