@@ -1,3 +1,9 @@
+# A response object for handling heating
+# At least one x10 controller (with USB) and actuator and a TEMPer USB device
+# in order to work.
+#
+# Author: Matt Revell
+
 import temper
 from x10.controllers.bus import USBScanner
 from time import sleep
@@ -5,7 +11,14 @@ from time import sleep
 from PrivateResponse import PrivateResponse
 
 class HeatingResponse(PrivateResponse):
+    """
+    A response object which reports the temperature and can control an x10
+    actuator.
+    """
     def __init__(self, botname, pipe):
+        """
+        Initialise paramters.
+        """
         self.pipe = pipe
         temper_devs = temper.TemperHandler().get_devices()
         self.temper_dev = (len(temper_devs) > 0 and temper_devs[0]) or None
@@ -38,10 +51,12 @@ class HeatingResponse(PrivateResponse):
             }
 
     def heating_status(self, tweet):
+        """
+        Requests temperature stats from the monitoring process and sends them
+        in a response.
+        """
         if self.temper_dev:
             self.pipe.send("get_diffs")
-            #out_args = (tweet.author.screen_name,) + self.pipe.recv()
-            #print out_args
             self.respond(
                     self.heating_replies["heating_status"] % (
                                             (tweet.author.screen_name,) +
@@ -58,6 +73,9 @@ class HeatingResponse(PrivateResponse):
                     )
 
     def heating_on(self, tweet):
+        """
+        Switches on the heating x10 actuator.
+        """
         if self.heater_dev:
             self.heater_dev.on()
             self.respond(
@@ -75,7 +93,9 @@ class HeatingResponse(PrivateResponse):
                     )
 
     def heating_off(self, tweet):
-        pass
+        """
+        Switches off the x10 actuator.
+        """
         if self.heater_dev:
             self.heater_dev.off()
             self.respond(
@@ -93,6 +113,9 @@ class HeatingResponse(PrivateResponse):
                     )
 
     def react(self, *args):
+        """
+        Executes the corresponding method for a matching tweet.
+        """
         tweet, match = args
         if self.is_allowed(tweet.author.screen_name):
             self.replies[match](tweet)

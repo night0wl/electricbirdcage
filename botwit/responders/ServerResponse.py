@@ -1,3 +1,7 @@
+# A response object for handling servers
+#
+# Author: Matt Revell
+
 import paramiko
 import socket
 from subprocess import Popen, PIPE
@@ -6,7 +10,13 @@ from time import sleep
 from PrivateResponse import PrivateResponse
 
 class ServerResponse(PrivateResponse):
+    """
+    A response object for handling servers
+    """
     def __init__(self, botname):
+        """
+        Initialise parameters
+        """
         replies = {
             "@%s SERVER STATUS.*$" % botname: self.server_check,
             "@%s SERVER WAKEUP.*$" % botname: self.server_wake,
@@ -27,6 +37,11 @@ class ServerResponse(PrivateResponse):
             }
 
     def get_ip_from_mac(self, mac):
+        """
+        Uses shell commands to determine the ip address from the mac address
+
+        Returns an ip as a string 'x.x.x.x'
+        """
         subp = Popen(
             """
             arp -n | grep %s | awk '{print $1}'
@@ -36,11 +51,21 @@ class ServerResponse(PrivateResponse):
         return subp.stdout.readline().strip()
 
     def get_ssh_conn(self):
+        """
+        Establishes an SSH connection.
+
+        Returns an SSH connection handle
+        """
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         return ssh
 
     def get_ssh_creds(self, base_key):
+        """
+        Retrieves the username and keyfile from redis.
+
+        Returns credentials or a tuple of (None, None, None) if no IP is found.
+        """
         ip = self.get_ip_from_mac(self.redis.get(base_key + 'mac'))
         if ip == '':
             return (None, None, None)
@@ -51,6 +76,11 @@ class ServerResponse(PrivateResponse):
 
 
     def check_ssh(self, base_key, initial_wait=0, interval=0, retries=1):
+        """
+        Attempts to establish an SSH connection.
+
+        Returns True if successful, False otherwise
+        """
         sleep(initial_wait)
         ssh = self.get_ssh_conn()
         ip, user, key_file = self.get_ssh_creds(base_key)
@@ -73,6 +103,10 @@ class ServerResponse(PrivateResponse):
         return False
 
     def server_check(self, tweet):
+        """
+        Checks whether or not a server is up (SSH) and triggers the appropriate
+        response.
+        """
         server_name = tweet.text.lower().split()[3]
         base_key = "%s:server:%s:" % (
                         self.twitter_bot.botname.lower(),
@@ -97,6 +131,10 @@ class ServerResponse(PrivateResponse):
 
 
     def server_wake(self, tweet):
+        """
+        Attempts to wake up a server and triggers the appropriate response when
+        it succeeds of fails.
+        """
         server_name = tweet.text.lower().split()[3]
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 2)
@@ -136,6 +174,10 @@ class ServerResponse(PrivateResponse):
                     )
 
     def server_shutdown(self, tweet):
+        """
+        Attempts to shutdown a server and triggers the appropriate response
+        when it succeeds or fails.
+        """
         server_name = tweet.text.lower().split()[3]
         base_key = "%s:server:%s:" % (
                         self.twitter_bot.botname.lower(),
@@ -172,6 +214,9 @@ class ServerResponse(PrivateResponse):
 
 
     def react(self, *args):
+        """
+        Invokes the method corresponding to the match.
+        """
         tweet, match = args
         if self.is_allowed(tweet.author.screen_name):
             self.replies[match](tweet)

@@ -1,3 +1,10 @@
+# A monitor for a TEMPer USB device
+# Keeps a record of any changes in temperature, listens for a signal and
+# responds if required. Has a method to calculate the velocity of change in
+# temperature.
+#
+# Author: matt Revell
+
 import temper
 from multiprocessing import Process, Pipe
 from time import sleep, time
@@ -6,7 +13,17 @@ MIN = 60
 HOUR = 60*60
 
 class TemperatureMonitor(object):
+    """
+    A monitor for a TEMPer USB device.
+
+    Keeps a record of any changes in temperature, listens for a signal and
+    responds if required. Has a method to calculate the velocity of change in
+    temperature.
+    """
     def __init__(self):
+        """
+        Initialise parameters
+        """
         devs = temper.TemperHandler().get_devices()
         self.dev = (len(devs) > 0 and devs[0]) or None
         self.events = [
@@ -14,6 +31,12 @@ class TemperatureMonitor(object):
                 ]
 
     def get_diffs(self, current_temperature):
+        """
+        Calculates and returns the difference in temperature over a minute and
+        an hour interval.
+
+        Returns a tuple (min, hour)
+        """
         get_events = lambda x : [
                     y for y in self.events if y[0] >= time() - x
                     ]
@@ -32,6 +55,11 @@ class TemperatureMonitor(object):
 
 
     def run(self, pipe):
+        """
+        Start monitoring temperature and record changes.
+
+        Runs forever, checking for signal. Terminates when it recieves 'halt'
+        """
         try:
             while True:
                 current_temperature = self.dev.get_temperature()
@@ -53,14 +81,3 @@ class TemperatureMonitor(object):
             pipe.send("quitting")
         except KeyboardInterrupt:
             pass
-
-if __name__ == "__main__":
-    mon = TemperatureMonitor()
-    parent, child = Pipe()
-    p = Process(target=mon.run, args=(child,))
-    p.start()
-    parent.send("get_diffs")
-    print parent.recv()
-    parent.send("halt")
-    print parent.recv()
-    p.join()
