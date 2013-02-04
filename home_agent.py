@@ -14,6 +14,7 @@ from botwit.bots import StreamBot
 from botwit.monitors import TemperatureMonitor
 from botwit.responders import SimpleResponse, ServerResponse, HeatingResponse
 
+
 def get_creds(botname):
     """
     Get Twitter API credetials from redis
@@ -34,13 +35,14 @@ def get_creds(botname):
         red.get(base_key + "access_token_secret")
         )
 
+
 def main():
     """
     Run the botwit agent
     """
     simple_replies = {
-            "^.*achoo.*$": "Bless You"
-            }
+        "^.*achoo.*$": "Bless You"
+        }
 
     try:
         botname = sys.argv[1]
