@@ -5,10 +5,13 @@
 #
 # Author: Matt Revell
 
+import atexit
+import logging
 import redis
 import sys
 
 from multiprocessing import Process, Pipe
+from signal import signal, SIGTERM
 
 from botwit.bots import StreamBot
 from botwit.monitors import TemperatureMonitor
@@ -35,6 +38,14 @@ def get_creds(botname):
         red.get(base_key + "access_token_secret")
         )
 
+def sig_handler(signum, frame):
+    logging.info("Received SIGTERM, quitting...")
+    sys.exit(0)
+
+def on_exit(p):
+    logging.info("Terminating monitors...")
+    p.terminate()
+    logging.info("Shutdown successful")
 
 def main():
     """
@@ -44,12 +55,24 @@ def main():
         "^.*achoo.*$": "Bless You"
         }
 
+    logging.basicConfig(
+            format='%(levelname)s: %(asctime)s %(message)s',
+            datefmt='%Y-%m-%d %I:%M:%S %p',
+            filename='/var/log/botwit.log',
+            level=logging.DEBUG
+            )
+
+    signal(SIGTERM, sig_handler)
+
+    logging.info('Botwit Starting...')
     try:
         botname = sys.argv[1]
         mon = TemperatureMonitor()
         parent, child = Pipe()
         p = Process(target=mon.run, args=(child,))
         p.start()
+        logging.info("Started child process, PID: %s" % p.pid)
+        atexit.register(on_exit, p)
         responders = [
             SimpleResponse(botname, simple_replies),
             ServerResponse(botname),
@@ -59,10 +82,7 @@ def main():
         bot = StreamBot(botname, creds, responders)
         bot.listen(None, ['@' + botname])
     except KeyboardInterrupt:
-        parent.send("halt")
-        p.join()
-        print
-        print "Quitting..."
+        logging.info("Received Ctrl+C, quitting...")
         sys.exit(0)
 
 if __name__ == "__main__":

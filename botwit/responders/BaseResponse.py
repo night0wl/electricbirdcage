@@ -3,6 +3,7 @@
 #
 # Author: Matt Revell
 
+import logging
 import re
 import redis
 
@@ -70,7 +71,7 @@ class BaseResponse(object):
         Returns True if successful, False on error.
         """
         if not self.twitter_bot:
-            print "ERROR: Twitter bot not set"
+            logging.error("Twitter bot not set")
             return False
         try:
             self.twitter_bot.api.update_status(
@@ -78,8 +79,8 @@ class BaseResponse(object):
                                 reply_to_id
                                 )
         except TweepError, e:
-            print e
+            logging.error("Failed to tweet: %s" % e)
             return False
 
-        print "Reply: %s" % reply
+        logging.info("I tweeted '%s'" % reply)
         return True

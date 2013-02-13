@@ -5,7 +5,9 @@
 #
 # Author: matt Revell
 
+import logging
 import temper
+
 from multiprocessing import Process, Pipe
 from time import sleep, time
 
@@ -68,6 +70,7 @@ class TemperatureMonitor(object):
                     if msg == "get_diffs":
                         pipe.send(self.get_diffs(current_temperature))
                     elif msg == "halt":
+                        logging.info("Temperature monitor received 'halt'")
                         break
 
                 if self.events[0][1] != current_temperature:

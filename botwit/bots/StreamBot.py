@@ -5,6 +5,7 @@
 #
 # Author: Matt Revell
 
+import logging
 import re
 import tweepy
 
@@ -49,6 +50,7 @@ class StreamBot(object):
         streamer = tweepy.Stream(
                 self.api.auth, StreamListener(self), timeout=300
                 )
+        logging.info("Listening...")
         streamer.filter(to_follow, to_track)
 
     def process(self, tweet):
@@ -59,10 +61,12 @@ class StreamBot(object):
         for responder in self.responders:
             matches = responder.matches(tweet)
             if len(matches):
-                print "%s\t%s\t%s" % (
-                        tweet.created_at,
-                        tweet.author.screen_name,
-                        tweet.text.encode("ascii", "replace")
+                logging.info(
+                        "%s tweeted '%s'" % (
+                            tweet.author.screen_name,
+                            tweet.text.encode("ascii", "replace")
+                            )
                         )
+
                 for match in matches:
                     responder.react(tweet, match)
