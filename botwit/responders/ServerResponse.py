@@ -2,6 +2,7 @@
 #
 # Author: Matt Revell
 
+import logging
 import paramiko
 import socket
 from subprocess import Popen, PIPE
@@ -187,7 +188,7 @@ class ServerResponse(PrivateResponse):
         ssh = self.get_ssh_conn()
         ip, user, key_file = self.get_ssh_creds(base_key)
         try:
-            print "trying"
+            logging.info("Attempting to shutdown '%s'" % server_name)
             ssh.connect(ip, username=user, key_filename=key_file)
         except (
                 paramiko.AuthenticationException,
@@ -195,6 +196,8 @@ class ServerResponse(PrivateResponse):
                 paramiko.SSHException,
                 socket.error
                 ), e:
+            loggoing.error("failed to shutdown '%s'" % server_name)
+
             self.respond_private(
                     tweet,
                     self.server_replies["fail"] % (
@@ -202,7 +205,7 @@ class ServerResponse(PrivateResponse):
                                 ),
                     tweet.id
                     )
-        print "executing"
+        logging.info("Executing 'sudo halt' on '%s'" % server_name)
         stdin, stdout, sterr = ssh.exec_command("sudo halt")
         self.respond(
                 self.server_replies["server_shutdown"] % (
