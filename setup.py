@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(
-    name = 'Botwit',
+    name = 'ElectricBirdcage',
     version = '0.1',
 
     author = 'Matt Revell',
@@ -12,10 +12,10 @@ setup(
     license = '?',
 
     packages = [
-        'botwit',
-        'botwit/bots',
-        'botwit/listeners',
-        'botwit/responders',
-        'botwit/monitors'
+        'ElectricBirdcage',
+        'ElectricBirdcage/bots',
+        'ElectricBirdcage/listeners',
+        'ElectricBirdcage/responders',
+        'ElectricBirdcage/monitors'
         ]
 )

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# A botwit agent for home automation.
+# A ElectricBirdcage agent for home automation.
 # Currently supports monitoring temperature and controlling heating and servers
 #
 # Author: Matt Revell
@@ -13,9 +13,9 @@ import sys
 from multiprocessing import Process, Pipe
 from signal import signal, SIGTERM
 
-from botwit.bots import StreamBot
-from botwit.monitors import TemperatureMonitor
-from botwit.responders import SimpleResponse, ServerResponse, HeatingResponse
+from ElectricBirdcage.bots import StreamBot
+from ElectricBirdcage.monitors import TemperatureMonitor
+from ElectricBirdcage.responders import SimpleResponse, ServerResponse, HeatingResponse
 
 
 def get_creds(botname):
@@ -49,7 +49,7 @@ def on_exit(p):
 
 def main():
     """
-    Run the botwit agent
+    Run the ElectricBirdcage agent
     """
     simple_replies = {
         "^.*achoo.*$": "Bless You"
@@ -58,13 +58,13 @@ def main():
     logging.basicConfig(
             format='%(levelname)s: %(asctime)s %(message)s',
             datefmt='%Y-%m-%d %I:%M:%S %p',
-            filename='/var/log/botwit.log',
+            filename='/var/log/electricbirdcage.log',
             level=logging.DEBUG
             )
 
     signal(SIGTERM, sig_handler)
 
-    logging.info('Botwit Starting...')
+    logging.info('ElectricBirdcage Starting...')
     try:
         botname = sys.argv[1]
         mon = TemperatureMonitor()

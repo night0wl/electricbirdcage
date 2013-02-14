@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
-#   A simple botwit agent
+#   A simple ElectricBirdcage agent
 #
 #   Author: Matt Revell
 
 import redis
 import sys
 
-from botwit.bots import StreamBot
-from botwit.responders import SimpleResponse
+from ElectricBirdcage.bots import StreamBot
+from ElectricBirdcage.responders import SimpleResponse
 
 
 def get_creds(botname):
@@ -34,7 +34,7 @@ def get_creds(botname):
 
 def main():
     """
-    Run the botwit agent
+    Run the ElectricBirdcage agent
     """
     simple_replies = {
         "^.*achoo.*$": "Bless You"

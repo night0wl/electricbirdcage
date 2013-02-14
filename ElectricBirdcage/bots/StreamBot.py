@@ -9,8 +9,8 @@ import logging
 import re
 import tweepy
 
-from botwit.listeners import StreamListener
-from botwit.responders import SimpleResponse
+from ElectricBirdcage.listeners import StreamListener
+from ElectricBirdcage.responders import SimpleResponse
 
 class StreamBot(object):
     """

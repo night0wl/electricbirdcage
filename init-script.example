@@ -10,11 +10,11 @@ BOT=<twitter account used for the bot>
 ENV_PATH=</path/to/virtual/env>
 
 # Set these if different (if ENV_PATH is not set, these must be hard coded)
-AGENT=$ENV_PATH/botwit/home_agent.py
+AGENT=$ENV_PATH/ElectricBirdcage/home_agent.py
 DAEMON=$ENV_PATH/bin/python
 
 DAEMON_OPTS="$AGENT $BOT"
-NAME=botwit
+NAME=ElectricBirdcage
 PIDFILE=/var/run/$NAME.pid
 
 case "$1" in
