@@ -86,6 +86,7 @@ class ServerResponse(PrivateResponse):
         ssh = self.get_ssh_conn()
         ip, user, key_file = self.get_ssh_creds(base_key)
         if not ip:
+            logging.debug("Failed to obtain an IP address")
             return False
 
         for x in range(retries):
@@ -99,8 +100,16 @@ class ServerResponse(PrivateResponse):
                     paramiko.AuthenticationException,
                     paramiko.BadHostKeyException,
                     ), e:
-                print e
+                logging.error("Paramiko Exception caught: %s" % e)
                 return False
+        logging.debug(
+                "Failed to connect to server, args:\n%s\t%s\t%s\t%s" % (
+                    base_key,
+                    initial_wait,
+                    interval,
+                    retries
+                    )
+                )
         return False
 
     def server_check(self, tweet):
