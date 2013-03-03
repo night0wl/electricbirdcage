@@ -5,7 +5,6 @@
 import logging
 import paramiko
 import socket
-from subprocess import Popen, PIPE
 from time import sleep
 
 from PrivateResponse import PrivateResponse
@@ -37,20 +36,6 @@ class ServerResponse(PrivateResponse):
             "fail": "DM @%s Oh Noes! That failed"
             }
 
-    def get_ip_from_mac(self, mac):
-        """
-        Uses shell commands to determine the ip address from the mac address
-
-        Returns an ip as a string 'x.x.x.x'
-        """
-        subp = Popen(
-            """
-            arp -n | grep %s | awk '{print $1}'
-            """ % mac,
-            shell=True, stdout=PIPE
-            )
-        return subp.stdout.readline().strip()
-
     def get_ssh_conn(self):
         """
         Establishes an SSH connection.
@@ -67,12 +52,13 @@ class ServerResponse(PrivateResponse):
 
         Returns credentials or a tuple of (None, None, None) if no IP is found.
         """
-        ip = self.get_ip_from_mac(self.redis.get(base_key + 'mac'))
+        ip = self.redis.get(base_key + 'ip')
         if ip == '':
             return (None, None, None)
 
         user = self.redis.get(base_key + 'user')
         key_file = self.redis.get(base_key + 'key_file')
+
         return (ip, user, key_file)
 
 
@@ -176,7 +162,6 @@ class ServerResponse(PrivateResponse):
                     )
         else:
             self.respond_private(
-                    tweet,
                     self.server_replies["fail"] % (
                                 tweet.author.screen_name,
                                 ),
@@ -205,10 +190,10 @@ class ServerResponse(PrivateResponse):
                 paramiko.SSHException,
                 socket.error
                 ), e:
-            loggoing.error("failed to shutdown '%s'" % server_name)
+            logging.error("failed to shutdown '%s'" % server_name)
+            logging.debug("Stack Trace: %s" % e)
 
             self.respond_private(
-                    tweet,
                     self.server_replies["fail"] % (
                                 tweet.author.screen_name,
                                 ),

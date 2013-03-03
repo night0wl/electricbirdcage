@@ -10,6 +10,7 @@ import temper
 
 from multiprocessing import Process, Pipe
 from time import sleep, time
+from usb import USBError
 
 MIN = 60
 HOUR = 60*60
@@ -76,8 +77,8 @@ class TemperatureMonitor(object):
                 if self.events[0][1] != current_temperature:
                     try:
                         self.events.insert(0, (time(), current_temperature))
-                    except usb.USBError:
-                        print "USB Error"
+                    except USBError, e:
+                        logging.debug("Ecountered a USB Error: %s" % e)
                         continue
                 sleep(1)
 

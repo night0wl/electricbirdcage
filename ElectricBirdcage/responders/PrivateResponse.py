@@ -1,3 +1,4 @@
+import logging
 from tweepy.error import TweepError
 from BaseResponse import BaseResponse
 
@@ -12,14 +13,13 @@ class PrivateResponse(BaseResponse):
 
     def respond_private(self, reply, reply_to_id=None):
         if reply[:2].lower() != "dm":
-            print "That reply isn't a direct message"
-            print reply
+            logging.error("Invalid DM: %s" % reply)
             return False
 
         try:
             self.respond(reply, reply_to_id)
-            print "Reply: %s" % reply
+            logging.info("Sent DM: %s" % reply)
             return True
         except TweepError:
-            print "Cannot send DM to %s" % tweet.author.screen_name
+            logging.error("Failed to send DM: %s" % reply)
             return False
