@@ -40,7 +40,7 @@ def get_creds(botname):
 
 def sig_handler(signum, frame):
     logging.info("Received SIGTERM, quitting...")
-    sys.exit(0)
+#    sys.exit(0)
 
 def on_exit(p):
     logging.info("Terminating monitors...")

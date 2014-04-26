@@ -50,7 +50,8 @@ class ServerResponse(PrivateResponse):
         """
         Retrieves the username and keyfile from redis.
 
-        Returns credentials or a tuple of (None, None, None) if no IP is found.
+        Returns credentials (ip, user, key_file) or a tuple of
+        (None, None, None) if no IP is found.
         """
         ip = self.redis.get(base_key + 'ip')
         if ip == '':
@@ -71,8 +72,9 @@ class ServerResponse(PrivateResponse):
         sleep(initial_wait)
         ssh = self.get_ssh_conn()
         ip, user, key_file = self.get_ssh_creds(base_key)
+        print ip, user, key_file
         if not ip:
-            logging.debug("Failed to obtain an IP address")
+            logging.error("Failed to obtain an IP address")
             return False
 
         for x in range(retries):
@@ -80,7 +82,8 @@ class ServerResponse(PrivateResponse):
             try:
                 ssh.connect(ip, username=user, key_filename=key_file)
                 return True
-            except (paramiko.SSHException, socket.error):
+            except (paramiko.SSHException, socket.error), e:
+                logging.debug("SSH Exception: %s" % e)
                 sleep(interval)
             except (
                     paramiko.AuthenticationException,
@@ -89,7 +92,7 @@ class ServerResponse(PrivateResponse):
                 logging.error("Paramiko Exception caught: %s" % e)
                 return False
         logging.debug(
-                "Failed to connect to server, args:\n%s\t%s\t%s\t%s" % (
+                "Failed to connect to server, args:\t%s\t%s\t%s\t%s" % (
                     base_key,
                     initial_wait,
                     interval,
